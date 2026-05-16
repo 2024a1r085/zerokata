@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tic Tac Toe</title>
+    <style>
+html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+        touch-action: manipulation;
+    }
+        :root {
+            --background-light: linear-gradient(to right, #f0f0f0, #d9d9d9);
+            --background-dark: linear-gradient(to right, #1e1e1e, #333);
+            --text-light: #333;
+            --text-dark: #e0e0e0;
+            --board-background-light: #fff;
+            --board-background-dark: #2a2a2a;
+            --border-light: #333;
+            --border-dark: #e0e0e0;
+            --cell-background-light: #eee;
+            --cell-background-dark: #444;
+            --cell-border-light: #ddd;
+            --cell-border-dark: #666;
+            --cell-hover-light: #ddd;
+            --cell-hover-dark: #666;
+            --cell-win-light: #99ccff;
+            --cell-win-dark: #0056b3;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
+        .status {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            aria-live: assertive;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            padding: 5px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: var(--board-background-light);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .dark-mode .board {
+            background: var(--board-background-dark);
+            border-color: var(--border-dark);
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            cursor: pointer;
+            user-select: none;
+            border: 2px solid var(--cell-border-light);
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+            background: var(--cell-background-light);
+        }
+        .dark-mode .cell {
+            background: var(--cell-background-dark);
+            border-color: var(--cell-border-dark);
+        }
+        .cell:hover {
+            background: var(--cell-hover-light);
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        .dark-mode .cell:hover {
+            background: var(--cell-hover-dark);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .cell.win {
+            background: var(--cell-win-light);
+        }
+        .dark-mode .cell.win {
+            background: var(--cell-win-dark);
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .toggle-button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: 2px solid currentColor;
+            border-radius: 8px;
+            background: transparent;
+            color: currentColor;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .toggle-button:hover {
+            background: #ddd;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .dark-mode .toggle-button {
+            color: var(--text-dark);
+            border-color: var(--text-dark);
+        }
+        .dark-mode .toggle-button:hover {
+            background: #333;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        .shake {
+            animation: shake 0.5s ease;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="status" id="status" aria-live="assertive">Player X's turn</div>
+    <div class="board" id="board">
+        <div class="cell" data-index="0" role="button" tabindex="0"></div>
+        <div class="cell" data-index="1" role="button" tabindex="0"></div>
+        <div class="cell" data-index="2" role="button" tabindex="0"></div>
+        <div class="cell" data-index="3" role="button" tabindex="0"></div>
+        <div class="cell" data-index="4" role="button" tabindex="0"></div>
+        <div class="cell" data-index="5" role="button" tabindex="0"></div>
+        <div class="cell" data-index="6" role="button" tabindex="0"></div>
+        <div class="cell" data-index="7" role="button" tabindex="0"></div>
+        <div class="cell" data-index="8" role="button" tabindex="0"></div>
+    </div>
+    <div class="button-container">
+        <button class="toggle-button" id="reset-button">🔄 Reset Game</button>
+        <button class="toggle-button" id="toggle-button">🌗 Auto Theme</button>
+    </div>
+    <script>
+		const board = document.getElementById('board');
+		const status = document.getElementById('status');
+		const cells = Array.from(document.getElementsByClassName('cell'));
+		const toggleButton = document.getElementById('toggle-button');
+		const resetButton = document.getElementById('reset-button');
+		let currentPlayer = 'X';
+		let gameActive = true;
+
+		const winningCombinations = [
+			[0, 1, 2], [3, 4, 5], [6, 7, 8],
+			[0, 3, 6], [1, 4, 7], [2, 5, 8],
+			[0, 4, 8], [2, 4, 6]
+		];
+
+		function checkWinner() {
+			for (const [a, b, c] of winningCombinations) {
+				if (cells[a].textContent && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent) {
+					cells[a].classList.add('win');
+					cells[b].classList.add('win');
+					cells[c].classList.add('win');
+					return cells[a].textContent;
+				}
+			}
+			return cells.every(cell => cell.textContent) ? 'Tie' : null;
+		}
+
+		function updateStatus(winner) {
+			if (winner) {
+				gameActive = false;
+				if (winner !== 'Tie') {
+					board.classList.add('shake');
+					setTimeout(() => {
+						board.classList.remove('shake');
+					}, 500);
+				}
+				status.textContent = winner === 'Tie' ? "It's a Tie!" : `Player ${winner} Wins!`;
+			} else {
+				currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+				status.textContent = `Player ${currentPlayer}'s turn`;
+			}
+		}
+
+		function handleClick(event) {
+			const cell = event.target;
+			if (cell.classList.contains('cell') && !cell.textContent && gameActive) {
+				cell.textContent = currentPlayer;
+				updateStatus(checkWinner());
+			}
+		}
+
+		function resetGame() {
+			cells.forEach(cell => {
+				cell.textContent = '';
+				cell.classList.remove('win');
+			});
+			currentPlayer = 'X';
+			gameActive = true;
+			status.textContent = `Player ${currentPlayer}'s turn`;
+		}
+
+		function setTheme(themeClass, buttonText) {
+			document.body.classList.toggle('dark-mode', themeClass === 'dark-mode');
+			document.body.classList.toggle('light-mode', themeClass === 'light-mode');
+			toggleButton.textContent = buttonText;
+		}
+
+		function toggleMode() {
+			const isDarkMode = document.body.classList.contains('dark-mode');
+			if (isDarkMode) {
+				setTheme('light-mode', '🌕 Light Theme');
+			} else {
+				setTheme('dark-mode', '🌑 Dark Theme');
+			}
+			if (window.AppInventor?.setWebViewString){
+				window.AppInventor.setWebViewString(toggleButton.textContent);
+			}
+		}
+
+		function loadTheme() {
+			const theme = window.AppInventor?.getWebViewString?.() || '🌕 Light Theme';
+			if (theme === '🌑 Dark Theme') {
+				setTheme('dark-mode', '🌑 Dark Theme');
+			} else {
+				setTheme('light-mode', '🌕 Light Theme');
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			board.addEventListener('click', handleClick);
+			toggleButton.addEventListener('click', toggleMode);
+			resetButton.addEventListener('click', resetGame);
+			loadTheme();
+		});
+	</script>
+</body>
+</html>
